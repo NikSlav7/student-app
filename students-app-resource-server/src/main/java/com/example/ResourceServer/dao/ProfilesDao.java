@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Component
@@ -24,7 +25,9 @@ public class ProfilesDao {
     }
 
     public Profile getProfileByEmailOrUsername(String cred) throws WrongDataSentException {
-        return profilesRepository.findProfileByEmailOrUsername(cred, cred).orElseThrow(() -> new WrongDataSentException("No user with such credentials existing"));
+        List<Profile> list =  profilesRepository.findProfileByEmailOrUsername(cred, cred);
+        if (list.isEmpty()) throw new WrongDataSentException("No user with such credentials existing");
+        else return list.get(0);
     }
 
     public Profile getProfileById(String id) throws UserNotFoundException {
