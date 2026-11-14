@@ -1,0 +1,51 @@
+version: "3"
+services:
+     db:
+       image: postgres
+       restart: always
+       environment:
+          - POSTGRES_DB=students
+          - POSTGRES_USER=nikslav
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+       volumes:
+         - pgdata:/var/lib/postgresql/data
+
+     auth-server:
+       depends_on:
+         - db
+       ports:
+         - 31212:31212
+       image: students-auth:6.2
+       restart: always
+       environment:
+          - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+
+
+     resource-server:
+        image: students-resource:3.2
+        restart: always
+        environment:
+          - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+          - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+        depends_on:
+          - db
+        ports:
+          - 21212:21212
+
+
+
+     front-end:
+        image: students-frontend:5.0
+        restart: always
+        depends_on:
+          - db
+          - resource-server
+          - auth-server
+        ports:
+          - 3000:3000
+
+volumes:
+  pgdata:
+
+

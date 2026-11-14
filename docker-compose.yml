@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: students
+      POSTGRES_USER: nikslav
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nikslav -d students"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-server:
+    build: ./students-app-auth-server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - auth-keys:/students-auth/access-refresh-token-keys
+    ports:
+      - "31212:31212"
+
+  resource-server:
+    build: ./students-app-resource-server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      auth-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+    ports:
+      - "21212:21212"
+
+  front-end:
+    build:
+      context: ./students-app-front-end
+      args:
+        REACT_APP_ENV: dev
+        REACT_APP_DEV_DOMAIN: localhost
+    restart: unless-stopped
+    depends_on:
+      - auth-server
+      - resource-server
+    ports:
+      - "3000:80"
+
+volumes:
+  pgdata:
+  auth-keys:

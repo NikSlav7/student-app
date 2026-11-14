@@ -1,0 +1,13 @@
+.env
+!students-app-front-end/.env
+access-refresh-token-keys/
+
+node_modules/
+target/
+build/
+out/
+
+.idea/
+*.iml
+.vscode/
+.DS_Store
